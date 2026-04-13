@@ -1,0 +1,285 @@
+/* ================================================
+   Reset e tipografia base
+   ================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; font-size: 15px; overflow: hidden; }
+h1 { font-size: 20px; font-weight: 600; }
+h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+
+/* ================================================
+   Layout principal — header + corpo + log
+   ================================================ */
+.app { display: grid; grid-template-rows: 52px 1fr auto; height: 100vh; }
+
+/* ================================================
+   Header
+   ================================================ */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; background: #fff; border-bottom: 1px solid #e0e0d8;
+  gap: 16px; flex-shrink: 0;
+}
+.header-left  { display: flex; align-items: baseline; gap: 12px; }
+.header-sub   { font-size: 12px; color: #aaa; }
+.header-right { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* ================================================
+   Badge de status
+   ================================================ */
+.status-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  transition: background 0.25s, color 0.25s;
+}
+.status-badge[data-state="idle"]        { background: #f5f5f0; color: #aaa; }
+.status-badge[data-state="calculating"] { background: #fff8e1; color: #f57f17; }
+.status-badge[data-state="live"]        { background: #e8f5e9; color: #2e7d32; }
+
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0;
+}
+.status-badge[data-state="live"] .status-dot { animation: pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* ================================================
+   Corpo — dois painéis lado a lado
+   ================================================ */
+.app-body { display: grid; grid-template-columns: 44% 56%; overflow: hidden; }
+
+/* ================================================
+   Painel esquerdo — gerenciamento de pacientes
+   ================================================ */
+.panel-patients {
+  display: flex; flex-direction: column;
+  border-right: 1px solid #e0e0d8; background: #fff; overflow: hidden;
+}
+
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid #eee; flex-shrink: 0;
+}
+.panel-title { font-size: 12px; font-weight: 600; color: #777; text-transform: uppercase; letter-spacing: 0.5px; }
+.panel-actions { display: flex; gap: 8px; }
+
+/* Wrapper com scroll vertical para a tabela */
+.patient-table-wrap { flex: 1; overflow-y: auto; }
+
+/* Tabela de pacientes */
+.patient-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.patient-table th {
+  background: #fafaf8; font-weight: 600; text-align: left;
+  padding: 8px 12px; border-bottom: 2px solid #eee;
+  font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.3px;
+  position: sticky; top: 0; z-index: 1;
+}
+.patient-table td { padding: 7px 12px; border-bottom: 1px solid #f2f2ef; vertical-align: middle; }
+.patient-table tbody tr:hover td { background: #fafaf8; }
+
+/* Células editáveis inline */
+.patient-table td[contenteditable="true"] { cursor: text; outline: none; border-radius: 4px; }
+.patient-table td[contenteditable="true"]:focus {
+  background: #fffde7; box-shadow: inset 0 0 0 1px #fbc02d;
+}
+
+/* Select de urgência inline */
+.urgency-select {
+  border: none; background: transparent; font-size: 13px;
+  cursor: pointer; width: 100%; padding: 0; color: inherit;
+}
+
+/* Botão remover */
+.remove-btn {
+  background: none; border: none; cursor: pointer;
+  color: #ccc; font-size: 18px; padding: 0 2px; line-height: 1;
+}
+.remove-btn:hover { color: #c62828; }
+
+/* Linha de adição de novo paciente */
+.add-patient-row {
+  display: grid; grid-template-columns: 1fr 90px 90px 100px auto;
+  gap: 8px; padding: 10px 14px; border-top: 1px solid #eee;
+  background: #fafaf8; flex-shrink: 0; align-items: center;
+}
+.add-patient-row input,
+.add-patient-row select {
+  padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px;
+  font-size: 12px; background: #fff; width: 100%;
+}
+
+/* ================================================
+   Painel direito — resultados ao vivo
+   ================================================ */
+.panel-results {
+  overflow-y: auto; padding: 14px 16px; background: #f5f5f0;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+/* Estado vazio (sem pacientes suficientes) */
+.results-empty {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  color: #bbb; font-size: 14px; text-align: center; padding: 40px;
+}
+
+/* Container dos resultados */
+.results-content { display: flex; flex-direction: column; gap: 12px; }
+
+/* ================================================
+   Métricas
+   ================================================ */
+.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.metric-card {
+  background: #fff; border-radius: 8px; padding: 12px; text-align: center;
+  border: 1px solid #e0e0d8;
+}
+.metric-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.metric-value { font-size: 20px; font-weight: 700; }
+.metric-unit  { font-size: 10px; color: #bbb; margin-top: 2px; }
+
+/* ================================================
+   Filas e Gantt lado a lado
+   ================================================ */
+.queues-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.gantt-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.exec-info  { font-size: 11px; color: #bbb; margin-bottom: 6px; }
+
+/* ================================================
+   Cards e seções
+   ================================================ */
+.section {
+  background: #fff; border: 1px solid #e0e0d8; border-radius: 10px; padding: 14px;
+}
+.section-title {
+  font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 12px;
+  border-bottom: 1px solid #eee; padding-bottom: 8px;
+}
+
+.algo-card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; background: #fff; }
+.algo-card h3 { color: #5c6bc0; }
+
+/* ================================================
+   Tabelas de dados
+   ================================================ */
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  background: #f5f5f0; font-weight: 600; text-align: left;
+  padding: 7px 10px; border-bottom: 2px solid #ddd;
+  font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.3px;
+}
+td { padding: 6px 10px; border-bottom: 1px solid #eee; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafaf8; }
+
+/* ================================================
+   Gráficos de evolução (colapsável)
+   ================================================ */
+.evolution-details summary {
+  cursor: pointer; font-size: 12px; font-weight: 600; color: #888; user-select: none;
+}
+.evolution-chart {
+  height: 180px; background: #f9f9f7; border-radius: 8px;
+  padding: 10px; overflow: hidden; margin-bottom: 10px;
+}
+.chart-svg { width: 100%; height: 100%; }
+
+/* ================================================
+   Badges
+   ================================================ */
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.badge-green  { background: #e8f5e9; color: #2e7d32; }
+.badge-yellow { background: #fff8e1; color: #f57f17; }
+.badge-orange { background: #fff3e0; color: #e65100; }
+.badge-red    { background: #fce4ec; color: #c62828; }
+.badge-purple { background: #ede7f6; color: #4527a0; }
+
+/* ================================================
+   Bolinhas de urgência
+   ================================================ */
+.urgency-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+.u1 { background: #4caf50; }
+.u2 { background: #ff9800; }
+.u3 { background: #f44336; }
+.u4 { background: #9c27b0; }
+.u5 { background: #212121; }
+
+/* ================================================
+   Botões
+   ================================================ */
+.btn {
+  padding: 8px 16px; border-radius: 7px; border: none;
+  cursor: pointer; font-size: 13px; font-weight: 600; transition: background 0.15s;
+}
+.btn-primary   { background: #5c6bc0; color: #fff; }
+.btn-primary:hover   { background: #3f51b5; }
+.btn-secondary { background: #eee; color: #333; }
+.btn-secondary:hover { background: #ddd; }
+.btn-danger    { background: #ef5350; color: #fff; }
+.btn-danger:hover    { background: #c62828; }
+.btn-small { padding: 5px 10px; font-size: 12px; border-radius: 5px; }
+
+/* ================================================
+   Modal de configurações
+   ================================================ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(2px);
+  z-index: 1000; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: #fff; border-radius: 12px;
+  width: 480px; max-width: 95vw; max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid #eee;
+}
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #aaa; line-height: 1; }
+.modal-close:hover { color: #333; }
+.modal-body   { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid #eee; }
+
+/* ================================================
+   Campos de formulário (modal)
+   ================================================ */
+label { font-size: 12px; color: #555; display: block; margin-bottom: 3px; }
+input[type=number], select { padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #fafafa; }
+input[type=range] { width: 100%; accent-color: #5c6bc0; }
+.field { margin-bottom: 12px; }
+
+/* ================================================
+   Log de execução
+   ================================================ */
+.app-log { border-top: 1px solid #e0e0d8; background: #fff; flex-shrink: 0; }
+.app-log details summary {
+  padding: 7px 16px; cursor: pointer; font-size: 11px; font-weight: 600;
+  color: #aaa; text-transform: uppercase; letter-spacing: 0.4px; user-select: none;
+}
+.log {
+  background: #1a1a2e; color: #a0cfff; font-family: monospace;
+  font-size: 12px; padding: 10px 16px; max-height: 130px; overflow-y: auto; line-height: 1.7;
+}
+.log-entry       { display: block; }
+.log-entry.info  { color: #a0cfff; }
+.log-entry.good  { color: #81c784; }
+.log-entry.warn  { color: #ffcc80; }
+
+/* ================================================
+   Estado vazio genérico
+   ================================================ */
+.empty-state { text-align: center; color: #bbb; padding: 20px; font-size: 13px; }
+
+/* ================================================
+   Responsividade
+   ================================================ */
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  .app { height: auto; grid-template-rows: auto; }
+  .app-body { grid-template-columns: 1fr; height: auto; }
+  .panel-patients { height: auto; max-height: none; overflow: visible; }
+  .patient-table-wrap { max-height: 300px; overflow-y: auto; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .queues-row, .gantt-row { grid-template-columns: 1fr; }
+}

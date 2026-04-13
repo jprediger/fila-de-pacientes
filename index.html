@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escalonamento de Pacientes — IA</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ============================================================
+       HEADER — título, badge de status, botão de configurações
+       ============================================================ -->
+  <header class="app-header">
+    <div class="header-left">
+      <h1>Fila de Pacientes</h1>
+      <span class="header-sub">AG &amp; Simulated Annealing</span>
+    </div>
+    <div class="header-center">
+      <div class="status-badge" id="statusBadge" data-state="idle">
+        <span class="status-dot"></span>
+        <span class="status-label" id="statusLabel">Aguardando pacientes</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-secondary btn-small" onclick="openSettings()">&#9881; Configurações</button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       BODY — painel de pacientes (esq.) + resultados ao vivo (dir.)
+       ============================================================ -->
+  <div class="app-body">
+
+    <!-- PAINEL ESQUERDO: Tabela de pacientes -->
+    <div class="panel-patients">
+      <div class="panel-header">
+        <span class="panel-title">Pacientes</span>
+        <div class="panel-actions">
+          <button class="btn btn-secondary btn-small" onclick="loadExample()">Exemplo</button>
+          <button class="btn btn-danger btn-small" onclick="clearPatients()">Limpar</button>
+        </div>
+      </div>
+
+      <div class="patient-table-wrap">
+        <table class="patient-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Chegada (min)</th>
+              <th>Duração (min)</th>
+              <th>Urgência</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="patientRows">
+            <tr><td colspan="5" class="empty-state">Nenhum paciente. Use "Exemplo" ou adicione abaixo.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Linha de adição de novo paciente -->
+      <div class="add-patient-row">
+        <input type="text" id="pName" placeholder="Nome do paciente" />
+        <input type="number" id="pArrival" min="0" max="300" value="0" placeholder="Chegada" />
+        <input type="number" id="pDuration" min="1" max="120" value="15" placeholder="Duração" />
+        <select id="pUrgency">
+          <option value="1">Baixa</option>
+          <option value="2">Média</option>
+          <option value="3" selected>Alta</option>
+          <option value="4">Crítica</option>
+          <option value="5">Imediata</option>
+        </select>
+        <button class="btn btn-primary btn-small" onclick="addPatient()">+ Adicionar</button>
+      </div>
+    </div>
+
+    <!-- PAINEL DIREITO: Resultados ao vivo -->
+    <div class="panel-results">
+
+      <div class="results-empty" id="resultsEmpty">
+        <p>Adicione ao menos 2 pacientes para ver a fila otimizada em tempo real.</p>
+      </div>
+
+      <div class="results-content" id="resultsContent" style="display:none">
+
+        <!-- Métricas resumidas -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Fitness AG</div>
+            <div class="metric-value" id="m-ag-fitness" style="color:#5c6bc0">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Espera média AG</div>
+            <div class="metric-value" id="m-ag-wait" style="color:#5c6bc0">—</div>
+            <div class="metric-unit">min</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Fitness SA</div>
+            <div class="metric-value" id="m-sa-fitness" style="color:#ef6c00">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Espera média SA</div>
+            <div class="metric-value" id="m-sa-wait" style="color:#ef6c00">—</div>
+            <div class="metric-unit">min</div>
+          </div>
+        </div>
+
+        <!-- Filas otimizadas lado a lado -->
+        <div class="queues-row">
+          <div class="algo-card">
+            <h3>AG — Fila Otimizada</h3>
+            <div class="exec-info" id="ag-exec-info"></div>
+            <div id="ag-queue-result"></div>
+          </div>
+          <div class="algo-card" style="border-color:#ff9800">
+            <h3 style="color:#ef6c00">SA — Fila Otimizada</h3>
+            <div class="exec-info" id="sa-exec-info"></div>
+            <div id="sa-queue-result"></div>
+          </div>
+        </div>
+
+        <!-- Tabela comparativa -->
+        <div class="section">
+          <h3>Comparação de Desempenho</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Métrica</th>
+                <th style="color:#5c6bc0">Algoritmo Genético</th>
+                <th style="color:#ef6c00">Simulated Annealing</th>
+                <th>Melhor</th>
+              </tr>
+            </thead>
+            <tbody id="comparison-table">
+              <tr><td colspan="4" class="empty-state">Aguardando execução.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Cronogramas Gantt lado a lado -->
+        <div class="gantt-row">
+          <div class="section">
+            <h3>Cronograma AG</h3>
+            <div id="ag-gantt" style="overflow-x:auto;margin-top:6px;"></div>
+          </div>
+          <div class="section">
+            <h3>Cronograma SA</h3>
+            <div id="sa-gantt" style="overflow-x:auto;margin-top:6px;"></div>
+          </div>
+        </div>
+
+        <!-- Gráficos de evolução (colapsável) -->
+        <details class="section evolution-details">
+          <summary>Evolução do Fitness (expandir)</summary>
+          <div style="margin-top:14px">
+            <h3>Algoritmo Genético</h3>
+            <div class="evolution-chart" id="ag-chart-wrap">
+              <svg class="chart-svg" id="ag-chart">
+                <text x="50%" y="50%" text-anchor="middle" fill="#bbb" font-size="13">Aguardando execução</text>
+              </svg>
+            </div>
+            <h3 style="margin-top:14px">Simulated Annealing</h3>
+            <div class="evolution-chart" id="sa-chart-wrap">
+              <svg class="chart-svg" id="sa-chart">
+                <text x="50%" y="50%" text-anchor="middle" fill="#bbb" font-size="13">Aguardando execução</text>
+              </svg>
+            </div>
+          </div>
+        </details>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       LOG — colapsável no rodapé
+       ============================================================ -->
+  <div class="app-log">
+    <details>
+      <summary>Log de execução</summary>
+      <div class="log" id="logBox">
+        <span class="log-entry info">Sistema iniciado.</span>
+      </div>
+    </details>
+  </div>
+
+  <!-- ============================================================
+       MODAL — parâmetros dos algoritmos
+       ============================================================ -->
+  <div class="modal-overlay" id="settingsModal" onclick="closeSettingsOutside(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Configurações dos Algoritmos</h2>
+        <button class="modal-close" onclick="closeSettings()">&#215;</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="section-title">Algoritmo Genético</div>
+        <div class="field">
+          <label>Tamanho da população: <strong id="popSizeVal">30</strong></label>
+          <input type="range" min="10" max="200" value="30" id="popSize"
+            oninput="document.getElementById('popSizeVal').textContent=this.value">
+        </div>
+        <div class="field">
+          <label>Gerações: <strong id="generationsVal">60</strong></label>
+          <input type="range" min="10" max="500" value="60" id="generations"
+            oninput="document.getElementById('generationsVal').textContent=this.value">
+        </div>
+        <div class="field">
+          <label>Taxa de mutação: <strong id="mutRateVal">0.10</strong></label>
+          <input type="range" min="1" max="50" value="10" id="mutRate"
+            oninput="document.getElementById('mutRateVal').textContent=(this.value/100).toFixed(2)">
+        </div>
+        <div class="field">
+          <label>Taxa de cruzamento: <strong id="crossRateVal">0.80</strong></label>
+          <input type="range" min="10" max="100" value="80" id="crossRate"
+            oninput="document.getElementById('crossRateVal').textContent=(this.value/100).toFixed(2)">
+        </div>
+        <div class="field">
+          <label>Elitismo (top %): <strong id="eliteVal">10</strong></label>
+          <input type="range" min="0" max="30" value="10" id="eliteSize"
+            oninput="document.getElementById('eliteVal').textContent=this.value">
+        </div>
+
+        <div class="section-title" style="margin-top:20px">Simulated Annealing</div>
+        <div class="field">
+          <label>Temperatura inicial: <strong id="tempInitVal">800</strong></label>
+          <input type="range" min="100" max="5000" step="100" value="800" id="tempInit"
+            oninput="document.getElementById('tempInitVal').textContent=this.value">
+        </div>
+        <div class="field">
+          <label>Temperatura mínima: <strong id="tempMinVal">1.00</strong></label>
+          <input type="range" min="0.01" max="10" step="0.01" value="1" id="tempMin"
+            oninput="document.getElementById('tempMinVal').textContent=parseFloat(this.value).toFixed(2)">
+        </div>
+        <div class="field">
+          <label>Taxa de resfriamento: <strong id="coolRateVal">0.970</strong></label>
+          <input type="range" min="900" max="999" value="970" id="coolRate"
+            oninput="document.getElementById('coolRateVal').textContent=(this.value/1000).toFixed(3)">
+        </div>
+        <div class="field">
+          <label>Iterações por temperatura: <strong id="iterTempVal">8</strong></label>
+          <input type="range" min="1" max="50" value="8" id="iterTemp"
+            oninput="document.getElementById('iterTempVal').textContent=this.value">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="closeSettings()">Aplicar e fechar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Scripts em ordem de dependência -->
+<script src="js/state.js"></script>
+<script src="js/logger.js"></script>
+<script src="js/fitness.js"></script>
+<script src="js/patients.js"></script>
+<script src="js/algorithms/genetic.js"></script>
+<script src="js/algorithms/annealing.js"></script>
+<script src="js/ui/progress.js"></script>
+<script src="js/ui/charts.js"></script>
+<script src="js/ui/gantt.js"></script>
+<script src="js/ui/results.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
