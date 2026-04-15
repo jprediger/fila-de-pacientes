@@ -34,12 +34,12 @@ function renderEvolutionChart(svgId, bestHistory, avgHistory, colorBest, colorAv
     <line x1="20" y1="${H-20}" x2="${W-10}" y2="${H-20}" stroke="#ddd" stroke-width="1"/>
     <line x1="20" y1="10" x2="20" y2="${H-20}" stroke="#ddd" stroke-width="1"/>
     <text x="22" y="${H-5}" font-size="10" fill="#aaa">0</text>
-    <text x="22" y="16" font-size="10" fill="#aaa">${maxV.toFixed(0)}</text>
+    <text x="22" y="16" font-size="10" fill="#aaa">${maxV.toFixed(0)}<title>Escala Y: 0 a ${maxV.toFixed(0)} (pior fitness observado). Quanto mais o gráfico desce, melhor a otimização.</title></text>
     <text x="${W/2}" y="${H-5}" font-size="10" fill="#aaa" text-anchor="middle">iterações</text>
-    ${avgHistory ? `<path d="${pathD(avgHistory)}" fill="none" stroke="${colorAvg}" stroke-width="1.5" opacity="0.5" stroke-dasharray="4,3"/>` : ''}
-    <path d="${pathD(bestHistory)}" fill="none" stroke="${colorBest}" stroke-width="2"/>
-    <circle cx="${xScale(n-1).toFixed(1)}" cy="${yScale(bestHistory[n-1]).toFixed(1)}" r="4" fill="${colorBest}"/>
-    ${avgHistory ? `<text x="${W-50}" y="20" font-size="10" fill="${colorAvg}">— média</text>` : ''}
-    <text x="${W-50}" y="34" font-size="10" fill="${colorBest}">— melhor</text>
+    ${avgHistory ? `<path d="${pathD(avgHistory)}" fill="none" stroke="${colorAvg}" stroke-width="1.5" opacity="0.5" stroke-dasharray="4,3"><title>Fitness médio da população a cada geração. Mostra a qualidade geral, não só o melhor.</title></path>` : ''}
+    <path d="${pathD(bestHistory)}" fill="none" stroke="${colorBest}" stroke-width="2"><title>Melhor fitness encontrado até cada iteração. Sempre decresce ou permanece igual.</title></path>
+    <circle cx="${xScale(n-1).toFixed(1)}" cy="${yScale(bestHistory[n-1]).toFixed(1)}" r="4" fill="${colorBest}"><title>Melhor fitness final: ${bestHistory[n-1].toFixed(1)}\nApós ${n} iterações</title></circle>
+    ${avgHistory ? `<text x="${W-50}" y="20" font-size="10" fill="${colorAvg}">— média<title>Fitness médio da população (tracejado). Indica diversidade da busca.</title></text>` : ''}
+    <text x="${W-50}" y="34" font-size="10" fill="${colorBest}">— melhor<title>Melhor fitness por iteração (linha sólida). Sempre decresce.</title></text>
   `;
 }

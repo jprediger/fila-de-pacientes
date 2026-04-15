@@ -49,7 +49,7 @@
             <tr>
               <th>Nome</th>
               <th>Chegada (min)</th>
-              <th>Duração (min)</th>
+              <th>Duração estimada (min)</th>
               <th>Urgência</th>
               <th></th>
             </tr>
@@ -62,17 +62,37 @@
 
       <!-- Linha de adição de novo paciente -->
       <div class="add-patient-row">
-        <input type="text" id="pName" placeholder="Nome do paciente" />
-        <input type="number" id="pArrival" min="0" max="300" value="0" placeholder="Chegada" />
-        <input type="number" id="pDuration" min="1" max="120" value="15" placeholder="Duração" />
-        <select id="pUrgency">
-          <option value="1">Baixa</option>
-          <option value="2">Média</option>
-          <option value="3" selected>Alta</option>
-          <option value="4">Crítica</option>
-          <option value="5">Imediata</option>
-        </select>
-        <button class="btn btn-primary btn-small" onclick="addPatient()">+ Adicionar</button>
+        <div class="add-field">
+          <label for="pName">Nome do paciente</label>
+          <input type="text" id="pName" placeholder="Ex: Maria Silva" />
+          <small class="field-hint">opcional — gera P1, P2… se vazio</small>
+        </div>
+        <div class="add-field">
+          <label for="pArrival">Chegada <span class="field-unit">min</span></label>
+          <input type="number" id="pArrival" min="0" max="300" value="0"
+                 title="Minutos desde o início do turno até o paciente chegar (0 = já estava esperando)" />
+          <small class="field-hint">desde início do turno</small>
+        </div>
+        <div class="add-field">
+          <label for="pDuration">Duração estimada <span class="field-unit">min</span></label>
+          <input type="number" id="pDuration" min="1" max="120" value="15"
+                 title="Estimativa do tempo de atendimento em minutos (ex: baseada no tipo de queixa ou protocolo de triagem)" />
+          <small class="field-hint">estimativa por tipo de queixa</small>
+        </div>
+        <div class="add-field">
+          <label for="pUrgency">Urgência <span class="field-unit">peso</span></label>
+          <select id="pUrgency">
+            <option value="1">Baixa &nbsp;×1</option>
+            <option value="2">Média &nbsp;×3</option>
+            <option value="3" selected>Alta &nbsp;&nbsp;×7</option>
+            <option value="4">Crítica ×15</option>
+            <option value="5">Imediata ×30</option>
+          </select>
+          <small class="field-hint">impacto no algoritmo</small>
+        </div>
+        <div class="add-field add-field--btn">
+          <button class="btn btn-primary btn-small" onclick="addPatient()">+ Adicionar</button>
+        </div>
       </div>
     </div>
 
@@ -85,90 +105,232 @@
 
       <div class="results-content" id="resultsContent" style="display:none">
 
-        <!-- Métricas resumidas -->
-        <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-label">Fitness AG</div>
-            <div class="metric-value" id="m-ag-fitness" style="color:#5c6bc0">—</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Espera média AG</div>
-            <div class="metric-value" id="m-ag-wait" style="color:#5c6bc0">—</div>
-            <div class="metric-unit">min</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Fitness SA</div>
-            <div class="metric-value" id="m-sa-fitness" style="color:#ef6c00">—</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Espera média SA</div>
-            <div class="metric-value" id="m-sa-wait" style="color:#ef6c00">—</div>
-            <div class="metric-unit">min</div>
-          </div>
+        <!-- Barra de tabs -->
+        <div class="results-tabs">
+          <button class="tab-btn active" id="tab-btn-comparacao" onclick="switchTab('comparacao')">Comparação</button>
+          <button class="tab-btn" id="tab-btn-ag" data-alg="ag" onclick="switchTab('ag')">Algoritmo Genético</button>
+          <button class="tab-btn" id="tab-btn-sa" data-alg="sa" onclick="switchTab('sa')">Recozimento Simulado</button>
         </div>
 
-        <!-- Filas otimizadas lado a lado -->
-        <div class="queues-row">
+        <!-- ===== TAB: Comparação ===== -->
+        <div class="tab-panel active" id="tab-comparacao">
+
+          <!-- Métricas resumidas dos dois algoritmos -->
+          <div class="metrics-grid">
+            <div class="metric-card" data-tooltip="Soma do tempo de espera de cada paciente multiplicado pelo peso de sua urgência. Menor = melhor. Imediata 30×, Crítica 15×, Alta 7×, Média 3×, Baixa 1×.">
+              <div class="metric-label">Fitness AG</div>
+              <div class="metric-value" id="m-ag-fitness" style="color:#5c6bc0">—</div>
+            </div>
+            <div class="metric-card" data-tooltip="Média aritmética do tempo de espera em minutos, sem ponderação por urgência. Espera = início do atendimento − hora de chegada.">
+              <div class="metric-label">Espera média AG</div>
+              <div class="metric-value" id="m-ag-wait" style="color:#5c6bc0">—</div>
+              <div class="metric-unit">min</div>
+            </div>
+            <div class="metric-card" data-tooltip="Soma do tempo de espera de cada paciente multiplicado pelo peso de sua urgência. Menor = melhor. Imediata 30×, Crítica 15×, Alta 7×, Média 3×, Baixa 1×.">
+              <div class="metric-label">Fitness SA</div>
+              <div class="metric-value" id="m-sa-fitness" style="color:#ef6c00">—</div>
+            </div>
+            <div class="metric-card" data-tooltip="Média aritmética do tempo de espera em minutos, sem ponderação por urgência. Espera = início do atendimento − hora de chegada.">
+              <div class="metric-label">Espera média SA</div>
+              <div class="metric-value" id="m-sa-wait" style="color:#ef6c00">—</div>
+              <div class="metric-unit">min</div>
+            </div>
+          </div>
+
+          <!-- Referências de baseline -->
+          <div class="section baseline-section">
+            <h3>Referência: sem otimização</h3>
+            <p class="baseline-description">
+              Para entender o ganho real dos algoritmos, compare com duas estratégias simples que não fazem otimização:
+            </p>
+            <div class="metrics-grid baseline-grid">
+              <div class="metric-card baseline-card" data-tooltip="Ordem de chegada — sem nenhuma lógica de prioridade. É o que acontece naturalmente sem triagem.">
+                <div class="metric-label">FCFS (chegada)</div>
+                <div class="metric-value" id="m-fcfs-fitness" style="color:#757575">—</div>
+                <div class="metric-unit">fitness</div>
+              </div>
+              <div class="metric-card baseline-card" data-tooltip="Espera média em minutos no cenário FCFS, sem ponderação por urgência.">
+                <div class="metric-label">Espera média FCFS</div>
+                <div class="metric-value" id="m-fcfs-wait" style="color:#757575">—</div>
+                <div class="metric-unit">min</div>
+              </div>
+              <div class="metric-card baseline-card" data-tooltip="Urgência decrescente — mais urgente primeiro, sem considerar horário de chegada. Decisão intuitiva de um enfermeiro.">
+                <div class="metric-label">Prioridade pura</div>
+                <div class="metric-value" id="m-priority-fitness" style="color:#90a4ae">—</div>
+                <div class="metric-unit">fitness</div>
+              </div>
+              <div class="metric-card baseline-card" data-tooltip="Espera média em minutos no cenário de prioridade pura, sem ponderação por urgência.">
+                <div class="metric-label">Espera média Prio.</div>
+                <div class="metric-value" id="m-priority-wait" style="color:#90a4ae">—</div>
+                <div class="metric-unit">min</div>
+              </div>
+            </div>
+            <details class="baseline-explanation">
+              <summary>O que são esses baselines?</summary>
+              <ul>
+                <li><strong>FCFS</strong> (First Come, First Served): atende na ordem de chegada — é o que acontece naturalmente quando não há sistema de triagem. Serve como o pior caso de referência.</li>
+                <li><strong>Prioridade pura</strong>: atende do mais urgente para o menos urgente, ignorando o horário de chegada. É a decisão intuitiva de qualquer enfermeiro sem ferramenta.</li>
+              </ul>
+              <p>O ganho real dos algoritmos é a redução do fitness em relação ao FCFS. Quanto maior o percentual de melhoria, mais eficaz foi a otimização.</p>
+            </details>
+          </div>
+
+          <!-- Tabela comparativa -->
+          <div class="section">
+            <h3>Comparação de Desempenho</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Métrica</th>
+                  <th style="color:#5c6bc0">Algoritmo Genético</th>
+                  <th style="color:#ef6c00">Recozimento Simulado</th>
+                  <th>Melhor</th>
+                </tr>
+              </thead>
+              <tbody id="comparison-table">
+                <tr><td colspan="4" class="empty-state">Aguardando execução.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- ===== TAB: Algoritmo Genético ===== -->
+        <div class="tab-panel" id="tab-ag">
+
+          <!-- Descrição do algoritmo -->
+          <div class="algo-description">
+            <h3 style="color:#5c6bc0">Algoritmo Genético (AG)</h3>
+            <p>
+              O Algoritmo Genético mantém uma <strong>população</strong> de ordens de atendimento e a evolui por
+              <strong>gerações</strong> via seleção por torneio, cruzamento OX e mutação por troca de posições.
+              Soluções com menor <em>fitness</em> (espera ponderada por urgência) têm mais chance de sobreviver
+              e gerar descendentes. Ao longo das gerações, a população converge para soluções cada vez melhores.
+            </p>
+            <details>
+              <summary>Parâmetros configurados ▸</summary>
+              <ul>
+                <li><strong>Tamanho da população</strong> — quantidade de soluções mantidas simultaneamente. Maior = mais diversidade, porém mais lento.</li>
+                <li><strong>Gerações</strong> — número de ciclos evolutivos. Mais gerações = mais refinamento da solução.</li>
+                <li><strong>Taxa de mutação</strong> — probabilidade de trocar dois pacientes de posição aleatoriamente. Evita convergência prematura.</li>
+                <li><strong>Taxa de cruzamento</strong> — probabilidade de combinar dois indivíduos (cruzamento OX). Explora novas combinações da ordem.</li>
+                <li><strong>Elitismo (top %)</strong> — percentual das melhores soluções copiadas diretamente para a próxima geração, sem alteração.</li>
+              </ul>
+            </details>
+            <div class="results-legend">
+              <strong>Como interpretar:</strong>
+              Fitness = soma de espera × peso de urgência (menor é melhor) &nbsp;·&nbsp;
+              Espera média = média simples em minutos &nbsp;·&nbsp;
+              Gráfico: linha sólida = melhor solução, linha tracejada = média da população &nbsp;·&nbsp;
+              Cronograma: barra colorida = atendimento (cor = urgência), barra cinza = espera
+            </div>
+          </div>
+
+          <!-- Métricas do AG -->
+          <div class="metrics-grid-2">
+            <div class="metric-card" data-tooltip="Soma do tempo de espera de cada paciente multiplicado pelo peso de sua urgência. Menor = melhor. Imediata 30×, Crítica 15×, Alta 7×, Média 3×, Baixa 1×.">
+              <div class="metric-label">Fitness AG</div>
+              <div class="metric-value" id="m-ag-fitness-tab" style="color:#5c6bc0">—</div>
+            </div>
+            <div class="metric-card" data-tooltip="Média aritmética do tempo de espera em minutos, sem ponderação por urgência. Espera = início do atendimento − hora de chegada.">
+              <div class="metric-label">Espera média AG</div>
+              <div class="metric-value" id="m-ag-wait-tab" style="color:#5c6bc0">—</div>
+              <div class="metric-unit">min</div>
+            </div>
+          </div>
+
+          <!-- Fila otimizada AG -->
           <div class="algo-card">
-            <h3>AG — Fila Otimizada</h3>
+            <h3>Fila Otimizada</h3>
             <div class="exec-info" id="ag-exec-info"></div>
             <div id="ag-queue-result"></div>
           </div>
-          <div class="algo-card" style="border-color:#ff9800">
-            <h3 style="color:#ef6c00">SA — Fila Otimizada</h3>
-            <div class="exec-info" id="sa-exec-info"></div>
-            <div id="sa-queue-result"></div>
-          </div>
-        </div>
 
-        <!-- Tabela comparativa -->
-        <div class="section">
-          <h3>Comparação de Desempenho</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Métrica</th>
-                <th style="color:#5c6bc0">Algoritmo Genético</th>
-                <th style="color:#ef6c00">Simulated Annealing</th>
-                <th>Melhor</th>
-              </tr>
-            </thead>
-            <tbody id="comparison-table">
-              <tr><td colspan="4" class="empty-state">Aguardando execução.</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Cronogramas Gantt lado a lado -->
-        <div class="gantt-row">
+          <!-- Gráfico de evolução AG -->
           <div class="section">
-            <h3>Cronograma AG</h3>
-            <div id="ag-gantt" style="overflow-x:auto;margin-top:6px;"></div>
-          </div>
-          <div class="section">
-            <h3>Cronograma SA</h3>
-            <div id="sa-gantt" style="overflow-x:auto;margin-top:6px;"></div>
-          </div>
-        </div>
-
-        <!-- Gráficos de evolução (colapsável) -->
-        <details class="section evolution-details">
-          <summary>Evolução do Fitness (expandir)</summary>
-          <div style="margin-top:14px">
-            <h3>Algoritmo Genético</h3>
+            <h3>Evolução do Fitness por Geração</h3>
             <div class="evolution-chart" id="ag-chart-wrap">
               <svg class="chart-svg" id="ag-chart">
                 <text x="50%" y="50%" text-anchor="middle" fill="#bbb" font-size="13">Aguardando execução</text>
               </svg>
             </div>
-            <h3 style="margin-top:14px">Simulated Annealing</h3>
+          </div>
+
+          <!-- Cronograma Gantt AG (largura total) -->
+          <div class="section">
+            <h3>Cronograma de Atendimento</h3>
+            <div id="ag-gantt" style="margin-top:6px;overflow-x:auto;"></div>
+          </div>
+
+        </div>
+
+        <!-- ===== TAB: Recozimento Simulado ===== -->
+        <div class="tab-panel" id="tab-sa">
+
+          <!-- Descrição do algoritmo -->
+          <div class="algo-description">
+            <h3 style="color:#ef6c00">Recozimento Simulado (SA)</h3>
+            <p>
+              O Recozimento Simulado parte de uma solução aleatória e explora trocas de pares de pacientes (<em>swap</em>).
+              A <strong>temperatura</strong> controla a aceitação de soluções piores: alta no início para ampla exploração,
+              decaindo geometricamente a cada passo até que apenas melhoras sejam aceitas.
+              O algoritmo equilibra exploração global e intensificação local sem ficar preso em ótimos locais.
+            </p>
+            <details>
+              <summary>Parâmetros configurados ▸</summary>
+              <ul>
+                <li><strong>Temperatura inicial</strong> — quanto maior, mais soluções piores são aceitas no início. Alta temperatura = exploração ampla.</li>
+                <li><strong>Temperatura mínima</strong> — condição de parada. Abaixo deste valor o algoritmo encerra a busca.</li>
+                <li><strong>Taxa de resfriamento</strong> — multiplicador aplicado à temperatura a cada passo (ex: 0.970 = resfria 3% por iteração).</li>
+                <li><strong>Iterações por temperatura</strong> — quantas trocas tentar antes de resfriar. Mais iterações = exploração mais densa em cada nível.</li>
+              </ul>
+            </details>
+            <div class="results-legend">
+              <strong>Como interpretar:</strong>
+              Fitness = soma de espera × peso de urgência (menor é melhor) &nbsp;·&nbsp;
+              Espera média = média simples em minutos &nbsp;·&nbsp;
+              Gráfico: linha sólida = melhor fitness encontrado até o momento &nbsp;·&nbsp;
+              Cronograma: barra colorida = atendimento (cor = urgência), barra cinza = espera
+            </div>
+          </div>
+
+          <!-- Métricas do SA -->
+          <div class="metrics-grid-2">
+            <div class="metric-card" data-tooltip="Soma do tempo de espera de cada paciente multiplicado pelo peso de sua urgência. Menor = melhor. Imediata 30×, Crítica 15×, Alta 7×, Média 3×, Baixa 1×.">
+              <div class="metric-label">Fitness SA</div>
+              <div class="metric-value" id="m-sa-fitness-tab" style="color:#ef6c00">—</div>
+            </div>
+            <div class="metric-card" data-tooltip="Média aritmética do tempo de espera em minutos, sem ponderação por urgência. Espera = início do atendimento − hora de chegada.">
+              <div class="metric-label">Espera média SA</div>
+              <div class="metric-value" id="m-sa-wait-tab" style="color:#ef6c00">—</div>
+              <div class="metric-unit">min</div>
+            </div>
+          </div>
+
+          <!-- Fila otimizada SA -->
+          <div class="algo-card" style="border-color:#ff9800">
+            <h3 style="color:#ef6c00">Fila Otimizada</h3>
+            <div class="exec-info" id="sa-exec-info"></div>
+            <div id="sa-queue-result"></div>
+          </div>
+
+          <!-- Gráfico de evolução SA -->
+          <div class="section">
+            <h3>Evolução do Fitness por Iteração</h3>
             <div class="evolution-chart" id="sa-chart-wrap">
               <svg class="chart-svg" id="sa-chart">
                 <text x="50%" y="50%" text-anchor="middle" fill="#bbb" font-size="13">Aguardando execução</text>
               </svg>
             </div>
           </div>
-        </details>
+
+          <!-- Cronograma Gantt SA (largura total) -->
+          <div class="section">
+            <h3>Cronograma de Atendimento</h3>
+            <div id="sa-gantt" style="margin-top:6px;overflow-x:auto;"></div>
+          </div>
+
+        </div>
 
       </div>
     </div>
@@ -264,6 +426,7 @@
 <script src="js/ui/progress.js"></script>
 <script src="js/ui/charts.js"></script>
 <script src="js/ui/gantt.js"></script>
+<script src="js/baselines.js"></script>
 <script src="js/ui/results.js"></script>
 <script src="js/main.js"></script>
 </body>

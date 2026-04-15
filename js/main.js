@@ -35,13 +35,17 @@ function scheduleAutoRun() {
     saResult = runSA(saParams);
     const saTime = ((performance.now() - t0sa) / 1000).toFixed(3);
 
+    const fcfsResult = computeFCFS();
+    const priorityResult = computePriority();
+
     log(
       `AG: ${agTime}s (fitness ${fitness(agResult.best.ind).score.toFixed(1)}) | ` +
-      `SA: ${saTime}s (fitness ${fitness(saResult.best.ind).score.toFixed(1)})`,
+      `SA: ${saTime}s (fitness ${fitness(saResult.best.ind).score.toFixed(1)}) | ` +
+      `FCFS ref: ${fcfsResult.score.toFixed(1)}`,
       'good'
     );
 
-    renderResults(agTime, saTime);
+    renderResults(agTime, saTime, fcfsResult, priorityResult);
 
     document.getElementById('resultsContent').style.display = 'flex';
     document.getElementById('resultsEmpty').style.display  = 'none';
