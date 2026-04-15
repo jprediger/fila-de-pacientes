@@ -221,7 +221,6 @@
               <strong>Como interpretar:</strong>
               Fitness = soma de espera × peso de urgência (menor é melhor) &nbsp;·&nbsp;
               Espera média = média simples em minutos &nbsp;·&nbsp;
-              Gráfico: linha sólida = melhor solução, linha tracejada = média da população &nbsp;·&nbsp;
               Cronograma: barra colorida = atendimento (cor = urgência), barra cinza = espera
             </div>
           </div>
@@ -244,16 +243,6 @@
             <h3>Fila Otimizada</h3>
             <div class="exec-info" id="ag-exec-info"></div>
             <div id="ag-queue-result"></div>
-          </div>
-
-          <!-- Gráfico de evolução AG -->
-          <div class="section">
-            <h3>Evolução do Fitness por Geração</h3>
-            <div class="evolution-chart" id="ag-chart-wrap">
-              <svg class="chart-svg" id="ag-chart">
-                <text x="50%" y="50%" text-anchor="middle" fill="#bbb" font-size="13">Aguardando execução</text>
-              </svg>
-            </div>
           </div>
 
           <!-- Cronograma Gantt AG (largura total) -->
@@ -289,7 +278,6 @@
               <strong>Como interpretar:</strong>
               Fitness = soma de espera × peso de urgência (menor é melhor) &nbsp;·&nbsp;
               Espera média = média simples em minutos &nbsp;·&nbsp;
-              Gráfico: linha sólida = melhor fitness encontrado até o momento &nbsp;·&nbsp;
               Cronograma: barra colorida = atendimento (cor = urgência), barra cinza = espera
             </div>
           </div>
@@ -312,16 +300,6 @@
             <h3 style="color:#ef6c00">Fila Otimizada</h3>
             <div class="exec-info" id="sa-exec-info"></div>
             <div id="sa-queue-result"></div>
-          </div>
-
-          <!-- Gráfico de evolução SA -->
-          <div class="section">
-            <h3>Evolução do Fitness por Iteração</h3>
-            <div class="evolution-chart" id="sa-chart-wrap">
-              <svg class="chart-svg" id="sa-chart">
-                <text x="50%" y="50%" text-anchor="middle" fill="#bbb" font-size="13">Aguardando execução</text>
-              </svg>
-            </div>
           </div>
 
           <!-- Cronograma Gantt SA (largura total) -->
@@ -424,7 +402,6 @@
 <script src="js/algorithms/genetic.js"></script>
 <script src="js/algorithms/annealing.js"></script>
 <script src="js/ui/progress.js"></script>
-<script src="js/ui/charts.js"></script>
 <script src="js/ui/gantt.js"></script>
 <script src="js/baselines.js"></script>
 <script src="js/ui/results.js"></script>

@@ -6,25 +6,40 @@
 /**
  * Desenha o gráfico de linha do histórico de fitness em um elemento SVG.
  *
- * @param {string}   svgId       - id do elemento <svg>
- * @param {number[]} bestHistory - série do melhor fitness por iteração
+ * Escalas lineares:
+ *   xScale: mapeia o índice da iteração [0, n-1] para coordenadas X [20, W-20]
+ *   yScale: mapeia o valor de fitness [minV, maxV] para coordenadas Y [H-20, 10]
+ *           (Y invertido: maior Y = mais para baixo na tela; fitness menor = mais acima)
+ *
+ * Margem de 5% acima e abaixo dos valores extremos (minV*0.95, maxV*1.05) evita que
+ * as linhas fiquem coladas nas bordas do gráfico, melhorando a leitura visual.
+ *
+ * @param {string}       svgId       - id do elemento <svg>
+ * @param {number[]}     bestHistory - série do melhor fitness por iteração
  * @param {number[]|null} avgHistory  - série da média (opcional, tracejada)
- * @param {string}   colorBest   - cor da linha principal
- * @param {string|null} colorAvg - cor da linha de média (null para omitir)
+ * @param {string}       colorBest   - cor da linha principal (melhor fitness)
+ * @param {string|null}  colorAvg    - cor da linha de média (null para omitir)
  */
 function renderEvolutionChart(svgId, bestHistory, avgHistory, colorBest, colorAvg) {
   const svg = document.getElementById(svgId);
-  const W = svg.parentElement.clientWidth - 24;
-  const H = 196;
+  const parent = svg.parentElement;
+  const style = getComputedStyle(parent);
+  const W = parent.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  const H = parent.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
+  // Domínio Y: 5% de margem para não cortar os extremos visualmente
   const allVals = [...bestHistory, ...(avgHistory || [])];
   const minV = Math.min(...allVals) * 0.95;
   const maxV = Math.max(...allVals) * 1.05;
+
   const n = bestHistory.length;
 
-  // Funções de escala: índice → coordenada X, valor → coordenada Y
-  const xScale = i => (i / (n - 1)) * (W - 40) + 20;
+  // xScale: índice → coordenada X na área útil [20, W-20]
+  // Guarda divisão por zero quando há apenas 1 ponto: centraliza no meio do SVG
+  const xScale = i => n > 1 ? (i / (n - 1)) * (W - 40) + 20 : W / 2;
+
+  // yScale: valor → coordenada Y (eixo Y invertido: menor fitness = posição mais alta)
   const yScale = v => H - 20 - ((v - minV) / (maxV - minV)) * (H - 30);
 
   // Gera o atributo "d" de um <path> SVG a partir de um array de valores
