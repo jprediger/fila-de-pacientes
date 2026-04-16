@@ -21,11 +21,12 @@ function switchTab(name) {
   document.getElementById('tab-' + name).classList.add('active');
 
   // Re-renderiza o Gantt após o painel ficar visível para obter clientWidth correto
-  if (name === 'ag' && typeof agResult !== 'undefined' && agResult) {
+  if (name === 'ag' && agResult) {
     requestAnimationFrame(() => renderGantt('ag-gantt', agResult.best.ind, '#5c6bc0'));
-  } else if (name === 'sa' && typeof saResult !== 'undefined' && saResult) {
+  } else if (name === 'sa' && saResult) {
     requestAnimationFrame(() => renderGantt('sa-gantt', saResult.best.ind, '#ef6c00'));
   }
+  // 'benchmark' não tem Gantt — nenhuma ação adicional necessária
 }
 
 /**
@@ -76,8 +77,8 @@ function renderResults(agTime, saTime, fcfsResult, priorityResult) {
  * Renderiza a tabela com a fila otimizada de um algoritmo.
  * Colunas: posição, paciente, urgência, chegada, início, espera.
  *
- * Reaplica o modelo de serviço sequencial localmente para calcular startTime e wait
- * de cada paciente na ordem otimizada — espelha exatamente o que fitness() computa.
+ * Usa computeSchedule() como fonte única da simulação de fila, garantindo que
+ * os valores exibidos aqui sejam sempre idênticos ao que fitness() computa.
  *
  * @param {string}   elId   - id do elemento container
  * @param {number[]} order  - índices dos pacientes na ordem otimizada
@@ -85,13 +86,8 @@ function renderResults(agTime, saTime, fcfsResult, priorityResult) {
  */
 function renderQueueList(elId, order, prefix) {
   const el = document.getElementById(elId);
-  let time = 0;  // acumula o instante em que o atendente fica livre (igual ao fitness())
   el.innerHTML = `<table><thead><tr><th>#</th><th>Paciente</th><th data-tooltip="Nível de prioridade clínica. Pesos no fitness: Baixa 1×, Média 3×, Alta 7×, Crítica 15×, Imediata 30×.">Urgência</th><th data-tooltip="Horário em que o paciente chegou à fila (minutos a partir do início).">Chegada</th><th data-tooltip="Horário em que o atendimento começa. Nunca antes da chegada do paciente.">Início</th><th data-tooltip="Tempo entre chegada e início do atendimento. Zero = atendido imediatamente.">Espera</th></tr></thead><tbody>` +
-    order.map((idx, pos) => {
-      const p = patients[idx];
-      const startTime = Math.max(time, p.arrival);
-      const wait = startTime - p.arrival;
-      time = startTime + p.duration;
+    computeSchedule(order).map(({ p, startTime, wait }, pos) => {
       return `<tr>
         <td>${pos + 1}</td>
         <td>${p.name}</td>

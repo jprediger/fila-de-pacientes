@@ -25,6 +25,7 @@
     </div>
     <div class="header-right">
       <button class="btn btn-secondary btn-small" onclick="openSettings()">&#9881; Configurações</button>
+      <button class="btn btn-secondary btn-small" onclick="openBenchmark()">&#9654;&#9654; Benchmark</button>
     </div>
   </header>
 
@@ -38,8 +39,15 @@
       <div class="panel-header">
         <span class="panel-title">Pacientes</span>
         <div class="panel-actions">
-          <button class="btn btn-secondary btn-small" onclick="loadExample()">Exemplo</button>
+          <select class="example-select" onchange="loadExample(this.value); this.value=''">
+            <option value="">— Exemplo —</option>
+            <option value="xs">5 pacientes</option>
+            <option value="sm">10 pacientes</option>
+            <option value="md">20 pacientes</option>
+            <option value="lg">30 pacientes</option>
+          </select>
           <button class="btn btn-danger btn-small" onclick="clearPatients()">Limpar</button>
+          <button class="btn btn-primary" id="runBtn" onclick="runAlgorithms()">&#9654; Executar</button>
         </div>
       </div>
 
@@ -100,7 +108,7 @@
     <div class="panel-results">
 
       <div class="results-empty" id="resultsEmpty">
-        <p>Adicione ao menos 2 pacientes para ver a fila otimizada em tempo real.</p>
+        <p>Adicione ao menos 2 pacientes e clique em <strong>Executar</strong> para ver a fila otimizada.</p>
       </div>
 
       <div class="results-content" id="resultsContent" style="display:none">
@@ -109,7 +117,8 @@
         <div class="results-tabs">
           <button class="tab-btn active" id="tab-btn-comparacao" onclick="switchTab('comparacao')">Comparação</button>
           <button class="tab-btn" id="tab-btn-ag" data-alg="ag" onclick="switchTab('ag')">Algoritmo Genético</button>
-          <button class="tab-btn" id="tab-btn-sa" data-alg="sa" onclick="switchTab('sa')">Recozimento Simulado</button>
+          <button class="tab-btn" id="tab-btn-sa" data-alg="sa" onclick="switchTab('sa')">Simulated Annealing</button>
+          <button class="tab-btn" id="tab-btn-benchmark" data-alg="benchmark" onclick="switchTab('benchmark')">Benchmark</button>
         </div>
 
         <!-- ===== TAB: Comparação ===== -->
@@ -183,7 +192,7 @@
                 <tr>
                   <th>Métrica</th>
                   <th style="color:#5c6bc0">Algoritmo Genético</th>
-                  <th style="color:#ef6c00">Recozimento Simulado</th>
+                  <th style="color:#ef6c00">Simulated Annealing</th>
                   <th>Melhor</th>
                 </tr>
               </thead>
@@ -253,14 +262,14 @@
 
         </div>
 
-        <!-- ===== TAB: Recozimento Simulado ===== -->
+        <!-- ===== TAB: Simulated Annealing ===== -->
         <div class="tab-panel" id="tab-sa">
 
           <!-- Descrição do algoritmo -->
           <div class="algo-description">
-            <h3 style="color:#ef6c00">Recozimento Simulado (SA)</h3>
+            <h3 style="color:#ef6c00">Simulated Annealing (SA)</h3>
             <p>
-              O Recozimento Simulado parte de uma solução aleatória e explora trocas de pares de pacientes (<em>swap</em>).
+              O Simulated Annealing parte de uma solução aleatória e explora trocas de pares de pacientes (<em>swap</em>).
               A <strong>temperatura</strong> controla a aceitação de soluções piores: alta no início para ampla exploração,
               decaindo geometricamente a cada passo até que apenas melhoras sejam aceitas.
               O algoritmo equilibra exploração global e intensificação local sem ficar preso em ótimos locais.
@@ -310,6 +319,32 @@
 
         </div>
 
+        <!-- ===== TAB: Benchmark ===== -->
+        <div class="tab-panel" id="tab-benchmark">
+
+          <div class="benchmark-header">
+            <div class="benchmark-controls">
+              <span class="benchmark-label">Iterações por preset:</span>
+              <select id="benchIterations" class="example-select">
+                <option value="3">3 iterações</option>
+                <option value="5" selected>5 iterações</option>
+                <option value="10">10 iterações</option>
+                <option value="20">20 iterações</option>
+              </select>
+              <button class="btn btn-primary btn-small" id="benchRunBtn" onclick="runBenchmark()">&#9654; Iniciar Benchmark</button>
+            </div>
+            <div id="benchProgress" style="display:none">
+              <span id="benchProgressText">Preparando...</span>
+              <div class="bench-progress-bar"><div id="benchProgressFill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <div id="benchResults" class="bench-results">
+            <div class="empty-state">Clique em "Iniciar Benchmark" para comparar todos os presets em todos os datasets.</div>
+          </div>
+
+        </div>
+
       </div>
     </div>
   </div>
@@ -338,6 +373,12 @@
       <div class="modal-body">
 
         <div class="section-title">Algoritmo Genético</div>
+        <div class="preset-row">
+          <span class="preset-label">Presets:</span>
+          <button class="btn btn-secondary btn-small" onclick="applyPreset('ga','padrao')">Padrão</button>
+          <button class="btn btn-secondary btn-small" onclick="applyPreset('ga','explorador')">Explorador</button>
+          <button class="btn btn-secondary btn-small" onclick="applyPreset('ga','intensivo')">Intensivo</button>
+        </div>
         <div class="field">
           <label>Tamanho da população: <strong id="popSizeVal">30</strong></label>
           <input type="range" min="10" max="200" value="30" id="popSize"
@@ -365,6 +406,12 @@
         </div>
 
         <div class="section-title" style="margin-top:20px">Simulated Annealing</div>
+        <div class="preset-row">
+          <span class="preset-label">Presets:</span>
+          <button class="btn btn-secondary btn-small" onclick="applyPreset('sa','padrao')">Padrão</button>
+          <button class="btn btn-secondary btn-small" onclick="applyPreset('sa','lento')">Lento</button>
+          <button class="btn btn-secondary btn-small" onclick="applyPreset('sa','intensivo')">Intensivo</button>
+        </div>
         <div class="field">
           <label>Temperatura inicial: <strong id="tempInitVal">800</strong></label>
           <input type="range" min="100" max="5000" step="100" value="800" id="tempInit"
@@ -405,6 +452,8 @@
 <script src="js/ui/gantt.js"></script>
 <script src="js/baselines.js"></script>
 <script src="js/ui/results.js"></script>
+<script src="js/presets.js"></script>
 <script src="js/main.js"></script>
+<script src="js/benchmark.js"></script>
 </body>
 </html>

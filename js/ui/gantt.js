@@ -14,14 +14,9 @@
  */
 function renderGantt(elId, order, color) {
   const el = document.getElementById(elId);
-  let time = 0;
-  const slots = order.map(idx => {
-    const p = patients[idx];
-    const startTime = Math.max(time, p.arrival);
-    const wait = startTime - p.arrival;
-    time = startTime + p.duration;
-    return { p, startTime, wait, end: time };
-  });
+  // computeSchedule() é a fonte única da simulação de fila; garante consistência
+  // com fitness() e renderQueueList() sem duplicar a lógica de time/startTime/wait.
+  const slots = computeSchedule(order);
   const totalTime = slots[slots.length - 1].end;
   const W = Math.max(400, el.clientWidth || el.parentElement?.clientWidth || 800);
   const ROW_H = 28;

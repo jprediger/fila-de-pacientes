@@ -4,14 +4,34 @@
 // ================================================
 
 /**
- * Calcula o fitness de uma ordem de atendimento.
+ * Simula a execução sequencial da fila e retorna os dados de cada slot de atendimento.
  *
- * Modelo de serviço sequencial:
- *   A variável `time` representa o instante em que o atendente fica disponível.
+ * Esta é a fonte única da lógica de simulação de fila. Tanto fitness() quanto as
+ * funções de renderização (renderQueueList, renderGantt) devem usar esta função
+ * para garantir consistência: se o modelo mudar, basta alterar aqui.
+ *
+ * Modelo de serviço sequencial com um único atendente:
+ *   `time` representa o instante em que o atendente fica disponível.
  *   Cada paciente começa a ser atendido em max(time, p.arrival):
- *     - Se a fila estiver ociosa (time < p.arrival), o paciente é atendido imediatamente ao chegar.
- *     - Se a fila estiver ocupada (time > p.arrival), o paciente aguarda até o atendente terminar.
- *   Após o atendimento, time avança em p.duration.
+ *     - Se a fila estiver ociosa (time < p.arrival), o paciente é atendido imediatamente.
+ *     - Se a fila estiver ocupada (time > p.arrival), o paciente aguarda.
+ *
+ * @param {number[]} order - Índices dos pacientes na ordem de atendimento
+ * @returns {{ idx: number, p: object, startTime: number, wait: number, end: number }[]}
+ */
+function computeSchedule(order) {
+  let time = 0;
+  return order.map(idx => {
+    const p = patients[idx];
+    const startTime = Math.max(time, p.arrival);
+    const wait = startTime - p.arrival;
+    time = startTime + p.duration;
+    return { idx, p, startTime, wait, end: time };
+  });
+}
+
+/**
+ * Calcula o fitness de uma ordem de atendimento.
  *
  * Score (objetivo a minimizar):
  *   score = Σ wait[i] × URGENCY_WEIGHTS[urgency[i]]
@@ -28,26 +48,12 @@ function fitness(order) {
   // Guarda defensivo: evita divisão por zero se order for vazio
   if (order.length === 0) return { score: 0, avgWait: 0 };
 
-  let time = 0;            // instante em que o atendente fica livre
   let totalWeightedWait = 0;
   let totalWait = 0;
 
-  for (const idx of order) {
-    const p = patients[idx];
-
-    // O atendimento começa no máximo entre o fim do paciente anterior e a chegada deste
-    const startTime = Math.max(time, p.arrival);
-
-    // Espera = diferença entre início do atendimento e chegada (sempre ≥ 0)
-    const wait = startTime - p.arrival;
-
-    // Peso da urgência amplifica a penalidade proporcional à prioridade clínica
-    const w = URGENCY_WEIGHTS[p.urgency];
-    totalWeightedWait += wait * w;
+  for (const { p, wait } of computeSchedule(order)) {
+    totalWeightedWait += wait * URGENCY_WEIGHTS[p.urgency];
     totalWait += wait;
-
-    // Atendente fica livre após a duração do atendimento
-    time = startTime + p.duration;
   }
 
   return {
@@ -70,4 +76,23 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+/**
+ * Retorna uma cópia do array com dois índices distintos trocados (swap mutation).
+ *
+ * Garante que os dois índices sorteados sejam sempre diferentes, assegurando que
+ * a mutação produza uma perturbação real na permutação. Sem essa garantia, quando
+ * a === b o swap é nulo e a taxa de mutação efetiva é menor que a configurada.
+ *
+ * @param {any[]} arr - array de origem (não é modificado)
+ * @returns {any[]} cópia com dois elementos trocados
+ */
+function swapMutate(arr) {
+  const copy = [...arr];
+  const a = Math.floor(Math.random() * copy.length);
+  let b;
+  do { b = Math.floor(Math.random() * copy.length); } while (b === a);
+  [copy[a], copy[b]] = [copy[b], copy[a]];
+  return copy;
 }

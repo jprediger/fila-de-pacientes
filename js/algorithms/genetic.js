@@ -23,6 +23,7 @@
  */
 function runGA(params) {
   const n = patients.length;
+  if (n < 2) return null;  // guarda defensivo: algoritmo requer ao menos 2 pacientes
   const base = Array.from({ length: n }, (_, i) => i);  // [0, 1, ..., n-1]
   const popSize = params.popSize;
   const generations = params.generations;
@@ -83,13 +84,12 @@ function runGA(params) {
 
     // ---- Mutação ----
     // Aplica swap mutation a cada indivíduo não-elite com probabilidade mutRate.
-    // O swap troca exatamente dois pacientes de posição — perturbação mínima que
+    // O swap troca exatamente dois pacientes distintos de posição — perturbação mínima que
     // mantém a permutação válida e introduz diversidade para escapar de ótimos locais.
+    // swapMutate() garante que os dois índices sejam sempre diferentes (sem mutação nula).
     for (let i = eliteCount; i < newPop.length; i++) {
       if (Math.random() < mutRate) {
-        const a = Math.floor(Math.random() * n);
-        const b = Math.floor(Math.random() * n);
-        [newPop[i][a], newPop[i][b]] = [newPop[i][b], newPop[i][a]];
+        newPop[i] = swapMutate(newPop[i]);
       }
     }
 
@@ -152,15 +152,22 @@ function oxCrossover(p1, p2) {
   // Filho inicializado com -1 (posições ainda não preenchidas)
   const child = new Array(n).fill(-1);
 
-  // Copia o segmento de p1 integralmente
-  for (let i = start; i < end; i++) child[i] = p1[i];
+  // Copia o segmento de p1 integralmente e registra quais genes já estão no filho.
+  // O Set permite verificar presença em O(1) em vez de O(n) com Array.includes(),
+  // reduzindo a complexidade total do crossover de O(n³) para O(n²).
+  const inChild = new Set();
+  for (let i = start; i < end; i++) {
+    child[i] = p1[i];
+    inChild.add(p1[i]);
+  }
 
   // Preenche o restante com genes de p2 em ordem circular a partir de `end`
   let pos = end % n;  // próxima posição livre no filho
   for (let i = 0; i < n; i++) {
     const gene = p2[(end + i) % n];
-    if (!child.includes(gene)) {  // só insere se ainda não está no filho
+    if (!inChild.has(gene)) {  // lookup O(1) em vez de O(n)
       child[pos] = gene;
+      inChild.add(gene);
       pos = (pos + 1) % n;
     }
   }

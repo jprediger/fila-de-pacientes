@@ -40,15 +40,19 @@
  */
 function runSA(params) {
   const n = patients.length;
+  if (n < 2) return null;  // guarda defensivo: algoritmo requer ao menos 2 pacientes
 
   // Solução inicial aleatória: permutação dos índices dos pacientes
   let current = shuffle(Array.from({ length: n }, (_, i) => i));
-  let currentScore = fitness(current).score;
+
+  // Avalia o fitness uma única vez e reutiliza score e avgWait — evita chamada dupla.
+  const initialFitness = fitness(current);
+  let currentScore = initialFitness.score;
 
   // `best` guarda a melhor solução vista; `current` pode piorar a qualquer momento
   let best = [...current];
   let bestScore = currentScore;
-  let bestAvgWait = fitness(current).avgWait;
+  let bestAvgWait = initialFitness.avgWait;
 
   let temp = params.tempInit;
   const tempMin = params.tempMin;
@@ -61,12 +65,10 @@ function runSA(params) {
   // Loop principal: resfria geometricamente até atingir temperatura mínima
   while (temp > tempMin) {
     for (let i = 0; i < iterPerTemp; i++) {
-      // Gera vizinho por troca de duas posições aleatórias (swap mutation)
-      // O swap é a menor perturbação possível em uma permutação: troca exatamente 2 pacientes
-      const neighbor = [...current];
-      const a = Math.floor(Math.random() * n);
-      const b = Math.floor(Math.random() * n);
-      [neighbor[a], neighbor[b]] = [neighbor[b], neighbor[a]];
+      // Gera vizinho por troca de duas posições distintas (swap mutation).
+      // swapMutate() garante que os dois índices sejam sempre diferentes,
+      // assegurando que o vizinho seja sempre diferente da solução atual.
+      const neighbor = swapMutate(current);
 
       // Calcula fitness do vizinho de uma vez; reutiliza .avgWait se aceitar como best
       const nf = fitness(neighbor);

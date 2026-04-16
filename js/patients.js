@@ -12,40 +12,124 @@ function addPatient() {
   patients.push({ id: Date.now(), name, arrival, duration, urgency });
   document.getElementById('pName').value = '';
   renderPatientTable();
-  scheduleAutoRun();
 }
 
 /** Remove um paciente pelo id. */
 function removePatient(id) {
   patients = patients.filter(p => p.id !== id);
   renderPatientTable();
-  scheduleAutoRun();
 }
 
 /** Remove todos os pacientes. */
 function clearPatients() {
   patients = [];
   renderPatientTable();
-  scheduleAutoRun();
+  document.getElementById('resultsContent').style.display = 'none';
+  document.getElementById('resultsEmpty').style.display  = 'flex';
+  setStatus('idle');
 }
 
-/** Carrega 10 pacientes de exemplo. */
-function loadExample() {
-  patients = [
-    { id: 1,  name: 'Ana Lima',      arrival: 0,  duration: 20, urgency: 3 },
-    { id: 2,  name: 'Carlos Melo',   arrival: 5,  duration: 10, urgency: 5 },
-    { id: 3,  name: 'Beatriz Souza', arrival: 10, duration: 30, urgency: 2 },
-    { id: 4,  name: 'Diego Ramos',   arrival: 12, duration: 15, urgency: 4 },
-    { id: 5,  name: 'Elisa Torres',  arrival: 20, duration: 25, urgency: 1 },
-    { id: 6,  name: 'Felipe Costa',  arrival: 22, duration: 10, urgency: 3 },
-    { id: 7,  name: 'Gabi Nunes',    arrival: 25, duration: 20, urgency: 4 },
-    { id: 8,  name: 'Hugo Pires',    arrival: 30, duration: 15, urgency: 2 },
-    { id: 9,  name: 'Iris Viana',    arrival: 35, duration: 12, urgency: 5 },
-    { id: 10, name: 'João Andrade',  arrival: 40, duration: 18, urgency: 3 },
-  ];
+// ================================================
+// Datasets de exemplo com tamanhos crescentes
+// ================================================
+const EXAMPLES = {
+  xs: {
+    label: '5 pacientes',
+    data: [
+      { name: 'Ana Lima',      arrival:  0, duration: 20, urgency: 3 },
+      { name: 'Carlos Melo',   arrival:  5, duration: 10, urgency: 5 },
+      { name: 'Beatriz Souza', arrival: 10, duration: 30, urgency: 2 },
+      { name: 'Diego Ramos',   arrival: 12, duration: 15, urgency: 4 },
+      { name: 'Elisa Torres',  arrival: 20, duration: 25, urgency: 1 },
+    ],
+  },
+  sm: {
+    label: '10 pacientes',
+    data: [
+      { name: 'Ana Lima',      arrival:  0, duration: 20, urgency: 3 },
+      { name: 'Carlos Melo',   arrival:  5, duration: 10, urgency: 5 },
+      { name: 'Beatriz Souza', arrival: 10, duration: 30, urgency: 2 },
+      { name: 'Diego Ramos',   arrival: 12, duration: 15, urgency: 4 },
+      { name: 'Elisa Torres',  arrival: 20, duration: 25, urgency: 1 },
+      { name: 'Felipe Costa',  arrival: 22, duration: 10, urgency: 3 },
+      { name: 'Gabi Nunes',    arrival: 25, duration: 20, urgency: 4 },
+      { name: 'Hugo Pires',    arrival: 30, duration: 15, urgency: 2 },
+      { name: 'Iris Viana',    arrival: 35, duration: 12, urgency: 5 },
+      { name: 'João Andrade',  arrival: 40, duration: 18, urgency: 3 },
+    ],
+  },
+  md: {
+    label: '20 pacientes',
+    data: [
+      { name: 'Ana Lima',        arrival:  0, duration: 20, urgency: 3 },
+      { name: 'Carlos Melo',     arrival:  5, duration: 10, urgency: 5 },
+      { name: 'Beatriz Souza',   arrival: 10, duration: 30, urgency: 2 },
+      { name: 'Diego Ramos',     arrival: 12, duration: 15, urgency: 4 },
+      { name: 'Elisa Torres',    arrival: 20, duration: 25, urgency: 1 },
+      { name: 'Felipe Costa',    arrival: 22, duration: 10, urgency: 3 },
+      { name: 'Gabi Nunes',      arrival: 25, duration: 20, urgency: 4 },
+      { name: 'Hugo Pires',      arrival: 30, duration: 15, urgency: 2 },
+      { name: 'Iris Viana',      arrival: 35, duration: 12, urgency: 5 },
+      { name: 'João Andrade',    arrival: 40, duration: 18, urgency: 3 },
+      { name: 'Karen Oliveira',  arrival: 42, duration: 22, urgency: 1 },
+      { name: 'Lucas Ferreira',  arrival: 48, duration:  8, urgency: 4 },
+      { name: 'Mariana Castro',  arrival: 50, duration: 35, urgency: 2 },
+      { name: 'Nelson Barros',   arrival: 55, duration: 14, urgency: 5 },
+      { name: 'Olivia Martins',  arrival: 58, duration: 20, urgency: 3 },
+      { name: 'Paulo Ribeiro',   arrival: 60, duration: 10, urgency: 1 },
+      { name: 'Queila Santos',   arrival: 65, duration: 28, urgency: 4 },
+      { name: 'Rafael Gomes',    arrival: 70, duration: 16, urgency: 2 },
+      { name: 'Sabrina Lopes',   arrival: 72, duration: 12, urgency: 5 },
+      { name: 'Thiago Alves',    arrival: 80, duration: 24, urgency: 3 },
+    ],
+  },
+  lg: {
+    label: '30 pacientes',
+    data: [
+      { name: 'Ana Lima',        arrival:  0, duration: 20, urgency: 3 },
+      { name: 'Carlos Melo',     arrival:  5, duration: 10, urgency: 5 },
+      { name: 'Beatriz Souza',   arrival: 10, duration: 30, urgency: 2 },
+      { name: 'Diego Ramos',     arrival: 12, duration: 15, urgency: 4 },
+      { name: 'Elisa Torres',    arrival: 20, duration: 25, urgency: 1 },
+      { name: 'Felipe Costa',    arrival: 22, duration: 10, urgency: 3 },
+      { name: 'Gabi Nunes',      arrival: 25, duration: 20, urgency: 4 },
+      { name: 'Hugo Pires',      arrival: 30, duration: 15, urgency: 2 },
+      { name: 'Iris Viana',      arrival: 35, duration: 12, urgency: 5 },
+      { name: 'João Andrade',    arrival: 40, duration: 18, urgency: 3 },
+      { name: 'Karen Oliveira',  arrival: 42, duration: 22, urgency: 1 },
+      { name: 'Lucas Ferreira',  arrival: 48, duration:  8, urgency: 4 },
+      { name: 'Mariana Castro',  arrival: 50, duration: 35, urgency: 2 },
+      { name: 'Nelson Barros',   arrival: 55, duration: 14, urgency: 5 },
+      { name: 'Olivia Martins',  arrival: 58, duration: 20, urgency: 3 },
+      { name: 'Paulo Ribeiro',   arrival: 60, duration: 10, urgency: 1 },
+      { name: 'Queila Santos',   arrival: 65, duration: 28, urgency: 4 },
+      { name: 'Rafael Gomes',    arrival: 70, duration: 16, urgency: 2 },
+      { name: 'Sabrina Lopes',   arrival: 72, duration: 12, urgency: 5 },
+      { name: 'Thiago Alves',    arrival: 80, duration: 24, urgency: 3 },
+      { name: 'Úrsula Campos',   arrival: 83, duration: 18, urgency: 1 },
+      { name: 'Vinícius Cruz',   arrival: 85, duration: 10, urgency: 4 },
+      { name: 'Wanda Freitas',   arrival: 90, duration: 30, urgency: 2 },
+      { name: 'Ximena Rocha',    arrival: 92, duration: 15, urgency: 5 },
+      { name: 'Yago Cardoso',    arrival: 95, duration: 20, urgency: 3 },
+      { name: 'Zaira Mendes',    arrival: 100, duration: 12, urgency: 4 },
+      { name: 'André Teixeira',  arrival: 102, duration: 25, urgency: 1 },
+      { name: 'Bruna Figueiredo',arrival: 108, duration:  9, urgency: 5 },
+      { name: 'Cássio Moreira',  arrival: 110, duration: 18, urgency: 2 },
+      { name: 'Daniela Pinto',   arrival: 115, duration: 22, urgency: 3 },
+    ],
+  },
+};
+
+/**
+ * Carrega um dataset de exemplo pelo identificador.
+ * @param {string} id - chave do exemplo: 'xs' | 'sm' | 'md' | 'lg'
+ */
+function loadExample(id) {
+  const ex = EXAMPLES[id];
+  if (!ex) return;
+  patients = ex.data.map((p, i) => ({ ...p, id: i + 1 }));
   renderPatientTable();
-  log('Dados de exemplo carregados (10 pacientes)', 'good');
-  scheduleAutoRun();
+  log(`Exemplo "${ex.label}" carregado. Clique em "Executar" para rodar os algoritmos.`, 'good');
 }
 
 /**
@@ -73,8 +157,6 @@ function updatePatient(id, field, value) {
   if (field === 'urgency') {
     p.urgency = parseInt(value);
   }
-
-  scheduleAutoRun();
 }
 
 /** Renderiza a tabela de pacientes com células editáveis inline. */
